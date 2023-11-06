@@ -31,13 +31,23 @@ async function run() {
       const availableFoods = database.collection("availableFoods");
 
 
-      app.get('/api/availableFoods', async(req, res) => {
-          const cursor = availableFoods.find();
+      app.get('/api/availableFoods', async (req, res) => {
+          
+          const sortobj = {
+              
+          }
+          
+          const sortField = req.query.sortField;
+          const sortOrder = req.query.sortOrder;
+
+          if (sortField && sortOrder) {
+              sortobj[sortField] = sortOrder;
+          }
+          
+          const cursor = availableFoods.find().sort(sortobj);
           const result = await cursor.toArray();
-          console.log(result); 
           res.send(result);  
       })
-
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
