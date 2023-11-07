@@ -7,9 +7,9 @@ const port = process.env.PORT || 5000;
 
 //middle war
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o9ylutr.mongodb.net/?retryWrites=true&w=majority"`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o9ylutr.mongodb.net/?retryWrites=true&w=majority`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -20,6 +20,9 @@ const client = new MongoClient(uri, {
   }
 }); 
 
+      const database = client.db("foodCharity");
+      const availableFoods = database.collection("availableFoods");
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -27,30 +30,32 @@ async function run() {
       // Send a ping to confirm a successful connection
       
 
-      const database = client.db("foodCharity");
-      const availableFoods = database.collection("availableFoods");
+     
 
 
     app.get('/api/availableFoods', async (req, res) => {
           
-      const sortobj = {
-              
-      }
-      
+      let sortobj = {};
+      let queryObj = {};
+
+
       const sortDate = req.query.sortDate
       const sortField = req.query.sortField;
       const sortOrder = req.query.sortOrder;
+      const donarEmail = req.query.donarEmail;
+   
+      if (donarEmail) {
+        queryObj.donarEmail = donarEmail;
+      }
 
       if (sortField && sortOrder) {
         sortobj[sortField] = sortOrder;
       }
-      if (sortDate) {
+      if (sortDate) { 
         sortobj[sortDate] = 1; 
       }
-      console.log(sortobj);
-      console.log(sortDate);
           
-      const cursor = availableFoods.find().sort(sortobj);
+      const cursor = availableFoods.find(queryObj).sort(sortobj);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -60,7 +65,14 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await availableFoods.findOne(query); 
       res.send(result);
+    })
 
+    app.post('/api/addTheFood' , async(req, res) => {    
+      const fooditem = req.body;
+      console.log(fooditem);
+      const result = await availableFoods.insertOne(fooditem);
+      res.send(result);
+ 
     })
 
     await client.db("admin").command({ ping: 1 });
