@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -31,23 +31,31 @@ async function run() {
       const availableFoods = database.collection("availableFoods");
 
 
-      app.get('/api/availableFoods', async (req, res) => {
+    app.get('/api/availableFoods', async (req, res) => {
           
-          const sortobj = {
+      const sortobj = {
               
-          }
+      }
           
-          const sortField = req.query.sortField;
-          const sortOrder = req.query.sortOrder;
+      const sortField = req.query.sortField;
+      const sortOrder = req.query.sortOrder;
 
-          if (sortField && sortOrder) {
-              sortobj[sortField] = sortOrder;
-          }
+      if (sortField && sortOrder) {
+        sortobj[sortField] = sortOrder;
+      }
           
-          const cursor = availableFoods.find().sort(sortobj);
-          const result = await cursor.toArray();
-          res.send(result);  
-      })
+      const cursor = availableFoods.find().sort(sortobj);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    app.get('/api/singleFood/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) };
+      const result = await availableFoods.findOne(query);
+      res.send(result);
+
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
