@@ -36,13 +36,19 @@ async function run() {
       const sortobj = {
               
       }
-          
+      
+      const sortDate = req.query.sortDate
       const sortField = req.query.sortField;
       const sortOrder = req.query.sortOrder;
 
       if (sortField && sortOrder) {
         sortobj[sortField] = sortOrder;
       }
+      if (sortDate) {
+        sortobj[sortDate] = 1; 
+      }
+      console.log(sortobj);
+      console.log(sortDate);
           
       const cursor = availableFoods.find().sort(sortobj);
       const result = await cursor.toArray();
@@ -52,7 +58,7 @@ async function run() {
     app.get('/api/singleFood/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) };
-      const result = await availableFoods.findOne(query);
+      const result = await availableFoods.findOne(query); 
       res.send(result);
 
     })
