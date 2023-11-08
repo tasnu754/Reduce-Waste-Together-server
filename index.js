@@ -69,7 +69,6 @@ async function run() {
 
     app.post('/api/addTheFood' , async(req, res) => {    
       const fooditem = req.body;
-      console.log(fooditem);
       const result = await availableFoods.insertOne(fooditem);
       res.send(result);
  
@@ -79,6 +78,33 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await availableFoods.deleteOne(query); 
+      res.send(result);
+
+    })
+
+    app.put("/api/availableFoods/update/:id" , async (req, res) => {
+      const id = req.params.id;
+      const updatedFood = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+
+      const food = {
+        $set: {
+
+          foodName: updatedFood.foodName ,
+          foodImageURL:updatedFood.foodImageURL ,
+          foodQuantity:updatedFood.foodQuantity ,
+          pickupLocation: updatedFood.pickupLocation,
+          expiredDate:updatedFood.expiredDate ,
+          additionalNotes: updatedFood.additionalNotes,
+          foodStatus: updatedFood.foodStatus,
+          donarEmail:updatedFood.donarEmail,
+          donarImg:updatedFood.donarImg,
+          donarName: updatedFood.donarName
+        }
+      }
+      
+      const result = await availableFoods.updateOne(filter , food , options); 
       res.send(result);
 
     })
