@@ -22,6 +22,7 @@ const client = new MongoClient(uri, {
 
       const database = client.db("foodCharity");
       const availableFoods = database.collection("availableFoods");
+      const requestedFoods = database.collection("requestedFoods");
 
 async function run() {
   try {
@@ -107,6 +108,12 @@ async function run() {
       const result = await availableFoods.updateOne(filter , food , options); 
       res.send(result);
 
+    })
+
+    app.post("/api/requestedFoods", async (req, res) => {
+      const requestedFood = req.body;
+      const result = await requestedFoods.insertOne(requestedFood);
+      res.send(result);
     })
 
     await client.db("admin").command({ ping: 1 });
