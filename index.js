@@ -68,6 +68,14 @@ async function run() {
       res.send(result);
     })
 
+    app.get("/api/requestedFoods/:id" ,  async(req, res) => {
+      const id = req.params.id;
+      const query = { foodId : id };
+       const cursor1 = requestedFoods.find(query);
+      const result = await cursor1.toArray();
+      res.send(result);
+    })
+
     app.post('/api/addTheFood' , async(req, res) => {    
       const fooditem = req.body;
       const result = await availableFoods.insertOne(fooditem);
@@ -80,6 +88,18 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await availableFoods.deleteOne(query); 
       res.send(result);
+
+    })
+
+    app.delete('/api/delivered/:id', async (req, res) => {
+      const id = req.params.id;
+      console.log(id);
+      const query1 = { _id: new ObjectId(id) };
+      const query2 = { foodId : id };
+      const result1 = await availableFoods.deleteOne(query1); 
+      const result2 = await requestedFoods.deleteMany(query2); 
+      res.json({ result1, result2 });
+
 
     })
 
@@ -115,6 +135,8 @@ async function run() {
       const result = await requestedFoods.insertOne(requestedFood);
       res.send(result);
     })
+
+    
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
