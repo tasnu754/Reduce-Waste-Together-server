@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser')
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +15,9 @@ app.use(cors({
   credentials:true
 }));
 app.use(express.json()); 
+app.use(cookieParser());
+
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.o9ylutr.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -26,6 +30,55 @@ const client = new MongoClient(uri, {
   }
 }); 
 
+const verifyToken = async (req, res, next) => {
+
+  if (!req.query.donarEmail) {
+    next();
+  }
+
+  else {
+      const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).send({message: "Not Authorized"})
+  }
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      console.log(err);
+      return res.status(401).send({message: "Unauthorized"})
+    }
+    console.log("value od dewcode", decoded);
+    req.user = decoded;
+     next();
+   
+  })
+  }
+}
+  
+
+// const verifyToken = async (req, res, next) => {
+//   const token = req.cookies?.token;
+//   if (!token) {
+//     return res.status(401).send({ message: "Not Authorized" });
+//   }
+
+//   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+//     if (err) {
+//       console.log(err);
+//       return res.status(401).send({ message: "Unauthorized" });
+//     } else {
+//       console.log("value of decoded", decoded);
+//       req.user = decoded;
+//       next();
+//     }
+//   });
+// }
+
+
+
+
+
+
       const database = client.db("foodCharity");
       const availableFoods = database.collection("availableFoods");
       const requestedFoods = database.collection("requestedFoods");
@@ -36,14 +89,15 @@ async function run() {
     await client.connect();
       // Send a ping to confirm a successful connection
       
-
+    // process.env.NODE_ENV === "production" ? true : false
+    //  process.env.NODE_ENV === "production" ? "none" : "strict"
     app.post('/api/jwt', async (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
       res.cookie("token", token, {
        httpOnly: true,
-       secure: process.env.NODE_ENV === "production" ? true: false,
-       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+       secure:process.env.NODE_ENV === "production" ? true : false ,
+       sameSite:  process.env.NODE_ENV === "production" ? "none" : "strict",
       }).send({success:true})
     })
 
@@ -61,8 +115,10 @@ async function run() {
      
 
 
-    app.get('/api/availableFoods', async (req, res) => {
+    app.get('/api/availableFoods', verifyToken,async (req, res) => {
           
+
+    
       let sortobj = {};
       let queryObj = {};
 
@@ -73,6 +129,9 @@ async function run() {
       const donarEmail = req.query.donarEmail;
    
       if (donarEmail) {
+        if (req.donarEmail?.email !== req.user?.email) {
+          return res.status(403).send({ message: "Forbidden access" })
+       }
         queryObj.donarEmail = donarEmail;
       }
 
@@ -88,7 +147,11 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/api/requestedFoods" ,  async(req, res) => {
+    app.get("/api/requestedFoods", verifyToken, async (req, res) => {
+      if (req.query?.requesterEmail !== req.user?.email) {
+        console.log("Access forbidden: User emails do not match");
+        return res.status(403).send({ message: "Forbidden access" })
+      }
       const requesterEmail = req.query.requesterEmail;
       const query = { requesterEmail : requesterEmail };
        const cursor1 = requestedFoods.find(query);
@@ -99,11 +162,20 @@ async function run() {
 
 
 
-    app.get('/api/singleFood/:id', async (req, res) => {
-      const id = req.params.id
-      const query = { _id: new ObjectId(id) };
-      const result = await availableFoods.findOne(query); 
-      res.send(result);
+    app.get('/api/singleFood/:id',verifyToken, async (req, res) => {
+      
+      //  console.log("User email from req.query:", req.query?.email);
+      //  console.log("User email from req.user:", req.user?.email);
+      if (req.query?.email !== req.user?.email) {
+        console.log("Access forbidden: User emails do not match");
+        return res.status(403).send({ message: "Forbidden access" })
+      }
+      else {
+        const id = req.params.id
+        const query = { _id: new ObjectId(id) };
+        const result = await availableFoods.findOne(query);
+        res.send(result);
+      }
     })
 
     app.get("/api/requestedFoods/:id" ,  async(req, res) => {
