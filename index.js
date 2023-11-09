@@ -32,12 +32,12 @@ const client = new MongoClient(uri, {
 
 const verifyToken = async (req, res, next) => {
 
-  if (!req.query.donarEmail) {
-    next();
+  if (req.query.veri) {
+    return next();
   }
 
-  else {
-      const token = req.cookies?.token;
+ 
+  else  {  const token = req.cookies?.token;
   if (!token) {
     return res.status(401).send({message: "Not Authorized"})
   }
@@ -51,8 +51,8 @@ const verifyToken = async (req, res, next) => {
     req.user = decoded;
      next();
    
-  })
-  }
+  })}
+  
 }
   
 
@@ -115,12 +115,13 @@ async function run() {
      
 
 
-    app.get('/api/availableFoods', verifyToken,async (req, res) => {
-          
+    app.get('/api/availableFoods', verifyToken, async (req, res) => {
+
 
     
       let sortobj = {};
       let queryObj = {};
+
 
 
       const sortDate = req.query.sortDate
@@ -129,9 +130,10 @@ async function run() {
       const donarEmail = req.query.donarEmail;
    
       if (donarEmail) {
-        if (req.donarEmail?.email !== req.user?.email) {
+        if (req.query.donarEmail!== req.user?.email) {
           return res.status(403).send({ message: "Forbidden access" })
-       }
+        }
+        console.log("okkkk");
         queryObj.donarEmail = donarEmail;
       }
 
