@@ -41,11 +41,23 @@ async function run() {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
       res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite:"none"
+       httpOnly: true,
+       secure: process.env.NODE_ENV === "production" ? true: false,
+       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       }).send({success:true})
     })
+
+    app.post('/api/logout', async (req, res) => {
+      const user = req.body;
+      console.log("logout");
+      res.clearCookie("token",
+        {
+          maxAge: 0,
+          secure: process.env.NODE_ENV === "production" ? true: false,
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        }
+      ).send({ success: true })
+    } )
      
 
 
