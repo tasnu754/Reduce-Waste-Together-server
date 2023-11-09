@@ -10,7 +10,9 @@ const port = process.env.PORT || 5000;
 //middle war
 app.use(cors({
   origin: [
-    "http://localhost:5173"
+    // "http://localhost:5173",
+    "https://reduce-waste-together.web.app",
+    "https://reduce-waste-together.firebaseapp.com"
   ],
   credentials:true
 }));
@@ -115,7 +117,31 @@ async function run() {
      
 
 
-    app.get('/api/availableFoods', verifyToken, async (req, res) => {
+    app.get('/api/availableFoods2', async (req, res) => {
+    
+      let sortobj = {};
+      let queryObj = {};
+
+
+
+      const sortDate = req.query.sortDate
+      const sortField = req.query.sortField;
+      const sortOrder = req.query.sortOrder;
+
+      if (sortField && sortOrder) {
+        sortobj[sortField] = sortOrder;
+      }
+      if (sortDate) { 
+        sortobj[sortDate] = 1; 
+      }
+          
+      const cursor = availableFoods.find(queryObj).sort(sortobj);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+
+     app.get('/api/availableFoods', verifyToken, async (req, res) => {
 
 
     
@@ -148,6 +174,7 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
 
     app.get("/api/requestedFoods", verifyToken, async (req, res) => {
       if (req.query?.requesterEmail !== req.user?.email) {
