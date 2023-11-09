@@ -61,6 +61,17 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/api/requestedFoods" ,  async(req, res) => {
+      const requesterEmail = req.query.requesterEmail;
+      const query = { requesterEmail : requesterEmail };
+       const cursor1 = requestedFoods.find(query);
+      const result = await cursor1.toArray();
+      res.send(result);
+    })
+
+
+
+
     app.get('/api/singleFood/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) };
@@ -93,13 +104,18 @@ async function run() {
 
     app.delete('/api/delivered/:id', async (req, res) => {
       const id = req.params.id;
-      console.log(id);
       const query1 = { _id: new ObjectId(id) };
       const query2 = { foodId : id };
       const result1 = await availableFoods.deleteOne(query1); 
       const result2 = await requestedFoods.deleteMany(query2); 
       res.json({ result1, result2 });
+    })
 
+     app.delete('/api/requestedFoods/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await requestedFoods.deleteOne(query); 
+      res.send(result);
 
     })
 
